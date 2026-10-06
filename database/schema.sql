@@ -133,6 +133,13 @@ CREATE TABLE `payments` (
   CONSTRAINT `p_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- ── Indexes ──────────────────────────────────────────────────────────────────
+ALTER TABLE `orders`
+  ADD INDEX `idx_orders_status` (`status`);
+
+ALTER TABLE `payments`
+  ADD INDEX `idx_payments_paid_at` (`paid_at`);
+
 -- Seed: Roles
 INSERT INTO `roles` (`id`, `name`, `description`) VALUES
 (1, 'Super Admin', 'Akses penuh ke seluruh sistem'),
