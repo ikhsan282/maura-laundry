@@ -88,19 +88,35 @@ maura-laundry/
 | Viewer | Read-only semua |
 
 ## Fitur
-- ✅ Login / Logout dengan session
-- ✅ CSRF protection di semua form
-- ✅ Email verifikasi via `mail()`
-- ✅ Forgot & reset password (token 1 jam)
-- ✅ RBAC: roles + permissions + role_permissions
-- ✅ Master data: layanan (jenis & harga), pelanggan
-- ✅ Buat order baru (multi-item layanan)
-- ✅ Update status order (diterima → proses → selesai → diambil)
-- ✅ Catat pembayaran (tunai / transfer)
-- ✅ Laporan order & rekap pendapatan
-- ✅ Dashboard statistik real-time
-- ✅ Pagination di semua list
-- ✅ Responsive (Bootstrap 5)
+
+### Dashboard
+- Statistik real-time: order hari ini, order pending, selesai belum diambil, pendapatan hari ini & bulan ini, total pelanggan
+- Tabel 8 order terbaru dengan status badge dan link langsung ke detail
+
+### Master Data
+- **Pelanggan** — CRUD; nama, telepon, alamat, email
+- **Layanan** — CRUD; nama, tipe (cuci, setrika, dll.), harga satuan, satuan (kg/pcs), estimasi hari selesai, status aktif/nonaktif
+
+### Order
+- Buat order: pilih pelanggan + tambah multi-item layanan secara dinamis (JavaScript tanpa reload)
+- Kalkulasi subtotal & total otomatis di browser; estimasi selesai dihitung dari `duration_days` layanan terlama
+- Nomor order di-generate otomatis
+- Update status: `diterima → proses → selesai → diambil`
+- Halaman detail order: rincian item, total, histori status
+- Daftar order dengan filter & pencarian
+
+### Pembayaran
+- Catat pembayaran per order; metode: tunai / transfer
+- Daftar pembayaran dengan filter status & metode
+
+### Laporan
+- **Harian** — filter rentang tanggal; kolom tunai, transfer, total per hari; grand total
+- **Bulanan** — pilih bulan; ringkasan total pendapatan, total order, hari aktif; tabel transaksi per hari
+- **Per Layanan** — filter rentang tanggal; jumlah order, total qty, pendapatan, persentase kontribusi per layanan
+
+### Manajemen User
+- CRUD user; nama, username, email, peran
+- Toggle aktif/nonaktif; reset password oleh Super Admin
 
 ## Keamanan
 - Semua query pakai MySQLi prepared statements
@@ -109,4 +125,6 @@ maura-laundry/
 - Output di-escape dengan `h()` → `htmlspecialchars(ENT_QUOTES, UTF-8)`
 - Session `httponly` + `samesite=Strict`
 - `.htaccess` blokir akses langsung ke `config/`, `includes/`, `database/`
-- Validasi permission di setiap halaman (`require_perm()`)
+- Validasi permission di setiap halaman (`require_permission()`)
+- Email verifikasi akun via `mail()`
+- Forgot & reset password dengan token berumur 1 jam
