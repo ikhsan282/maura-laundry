@@ -1,0 +1,72 @@
+/* Maura Laundry — Main Stylesheet */
+
+:root {
+  --sidebar-width: 240px;
+  --sidebar-collapsed: 60px;
+  --primary: #0d6efd;
+}
+
+/* Layout */
+.wrapper { min-height: 100vh; }
+
+.sidebar {
+  width: var(--sidebar-width);
+  min-height: 100vh;
+  transition: width .25s ease;
+  flex-shrink: 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+  z-index: 100;
+}
+
+.sidebar.collapsed { width: var(--sidebar-collapsed); }
+.sidebar.collapsed .nav-link span,
+.sidebar.collapsed .sidebar-header div > div,
+.sidebar.collapsed .nav-item-label { display: none; }
+.sidebar.collapsed .nav-link { justify-content: center; padding: .5rem; }
+.sidebar.collapsed .nav-link .bi { margin: 0 !important; }
+
+.main-content { min-width: 0; }
+
+/* Sidebar nav */
+.sidebar .nav-link {
+  color: #adb5bd;
+  border-radius: .375rem;
+  padding: .45rem .75rem;
+  font-size: .875rem;
+  transition: background .15s, color .15s;
+  display: flex;
+  align-items: center;
+}
+.sidebar .nav-link:hover { background: rgba(255,255,255,.08); color: #fff; }
+.sidebar .nav-link.active  { background: var(--primary); color: #fff; }
+
+/* Cards */
+.stat-card { border: none; border-radius: .75rem; transition: transform .15s; }
+.stat-card:hover { transform: translateY(-2px); }
+.stat-icon { width: 48px; height: 48px; border-radius: .5rem; display:flex; align-items:center; justify-content:center; font-size: 1.4rem; }
+
+/* Table */
+.table-hover tbody tr:hover { background: #f8f9ff; }
+
+/* Badges */
+.badge { font-size: .75em; font-weight: 500; }
+
+/* Print receipt */
+@media print {
+  .no-print { display: none !important; }
+  .print-area { width: 80mm; margin: 0 auto; font-size: 11px; font-family: monospace; }
+  .print-area hr { border-top: 1px dashed #000; }
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .sidebar { width: var(--sidebar-collapsed); }
+  .sidebar .nav-link span,
+  .sidebar .sidebar-header div > div,
+  .sidebar .nav-item-label { display: none; }
+  .sidebar .nav-link { justify-content: center; padding: .5rem; }
+  .sidebar .nav-link .bi { margin: 0 !important; }
+}

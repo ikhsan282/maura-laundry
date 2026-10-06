@@ -1,0 +1,31 @@
+Options -Indexes
+ServerSignature Off
+
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteBase /maura-laundry/
+
+    # Force HTTPS (uncomment on production with SSL)
+    # RewriteCond %{HTTPS} off
+    # RewriteRule ^ https://%{HTTP_HOST}%{REQUEST_URI} [L,R=301]
+
+    # Block direct access to config and includes
+    RewriteRule ^config/.*$   - [F,L]
+    RewriteRule ^includes/.*$ - [F,L]
+    RewriteRule ^database/.*$ - [F,L]
+</IfModule>
+
+# Block sensitive files
+<FilesMatch "\.(sql|log|env|sh|bak|git)$">
+    Order allow,deny
+    Deny from all
+</FilesMatch>
+
+# PHP settings for shared hosting
+<IfModule mod_php.c>
+    php_value upload_max_filesize 10M
+    php_value post_max_size 10M
+    php_value max_execution_time 60
+    php_value session.cookie_httponly 1
+    php_value session.use_strict_mode 1
+</IfModule>
