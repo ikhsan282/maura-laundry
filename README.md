@@ -41,7 +41,7 @@ define('MAIL_FROM', 'noreply@mauralaundry.com');
 ### 5. Login Default
 | Username | Password | Peran |
 |---|---|---|
-| `superadmin` | `password` | Super Admin |
+| `superadmin` | `P@ssw0rd` | Super Admin |
 
 > **Ganti password segera setelah login pertama!**
 

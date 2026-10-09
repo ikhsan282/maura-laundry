@@ -269,10 +269,41 @@ INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
 INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
 (5,1);
 
--- Seed: Default Super Admin user (password: Admin@1234)
+-- Seed: Default Super Admin user (password: P@ssw0rd)
 INSERT INTO `users` (`role_id`, `name`, `username`, `email`, `password`, `email_verified`) VALUES
 (1, 'Super Administrator', 'superadmin', 'admin@mauralaundry.com',
- '$2y$12$92IXUNpkjO0rOQ5byMi.Ye4oKoEa3Ro9llC/.og/at2.uHxRa0yAK', 1);
+ '$2y$12$oucBlvl6RGkxgjQ0iAF2IehCiJI2tn9epJCvpnW/A0BBFcRKnbTfu', 1);
+
+-- Customer loyalty points
+CREATE TABLE `customer_points` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `customer_id` int(11) NOT NULL,
+  `points` int(11) NOT NULL DEFAULT 0,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `customer_id` (`customer_id`),
+  CONSTRAINT `cp_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+-- Points transaction history
+CREATE TABLE `customer_point_transactions` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `customer_id` int(11) NOT NULL,
+  `payment_id` int(11) DEFAULT NULL,
+  `user_id` int(11) NOT NULL,
+  `type` enum('earn','redeem') NOT NULL,
+  `points` int(11) NOT NULL COMMENT 'Positive for earn, negative for redeem',
+  `notes` varchar(255) DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_cpt_customer` (`customer_id`,`created_at`),
+  KEY `cpt_payment` (`payment_id`),
+  KEY `cpt_user` (`user_id`),
+  CONSTRAINT `cpt_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `cpt_payment` FOREIGN KEY (`payment_id`) REFERENCES `payments` (`id`) ON DELETE SET NULL,
+  CONSTRAINT `cpt_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Seed: Sample services
 INSERT INTO `services` (`name`, `type`, `price`, `unit`, `duration_days`, `description`) VALUES
