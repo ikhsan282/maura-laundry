@@ -74,9 +74,22 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $stmt = $db->prepare("INSERT INTO payments (order_id,user_id,amount,method,deposit_transaction_id,reference) VALUES (?,?,?,?,?,?)");
             $ref = $reference ?: null;
             $stmt->bind_param('iidsis', $order_id, $user_id, $amount, $method, $deposit_id, $ref);
-            $stmt->execute(); $stmt->close();
+            $stmt->execute();
+            $payment_id = $db->insert_id;
+            $stmt->close();
+            
+            // Accrue loyalty points: +1 per Rp 10,000
+            $points_earned = (int)floor($amount / 10000);
+            if ($points_earned > 0) {
+                $db->query("INSERT INTO customer_points (customer_id,points) VALUES ({$order['customer_id']},{$points_earned}) ON DUPLICATE KEY UPDATE points=points+{$points_earned}");
+                $note = 'Pembayaran order ' . $order['order_number'] . ' - ' . idr($amount);
+                $pt = $db->prepare("INSERT INTO customer_point_transactions (customer_id,payment_id,user_id,type,points,notes) VALUES (?,?,?,'earn',?,?)");
+                $pt->bind_param('iiiis', $order['customer_id'], $payment_id, $user_id, $points_earned, $note);
+                $pt->execute(); $pt->close();
+            }
+            
             $db->commit();
-            flash('success', 'Pembayaran sebesar ' . idr($amount) . ' berhasil dicatat.');
+            flash('success', 'Pembayaran sebesar ' . idr($amount) . ' berhasil dicatat.' . ($points_earned > 0 ? " +{$points_earned} poin." : ''));
             redirect(APP_URL . '/pages/orders/view.php?order_number=' . urlencode($order['order_number']));
         } catch (Throwable $e) {
             $db->rollback();

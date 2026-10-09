@@ -15,11 +15,11 @@ if ($search !== '') {
     $like  = "%$search%";
     $total_stmt = $db->prepare("SELECT COUNT(*) FROM customers WHERE name LIKE ? OR phone LIKE ? OR email LIKE ?");
     $total_stmt->bind_param('sss', $like, $like, $like); $total_stmt->execute(); $total_stmt->bind_result($total); $total_stmt->fetch(); $total_stmt->close();
-    $stmt = $db->prepare("SELECT c.*, (SELECT COUNT(*) FROM orders o WHERE o.customer_id=c.id) AS order_count FROM customers c WHERE c.name LIKE ? OR c.phone LIKE ? OR c.email LIKE ? ORDER BY c.name LIMIT ? OFFSET ?");
+    $stmt = $db->prepare("SELECT c.*, (SELECT COUNT(*) FROM orders o WHERE o.customer_id=c.id) AS order_count, COALESCE(cp.points,0) AS points FROM customers c LEFT JOIN customer_points cp ON cp.customer_id=c.id WHERE c.name LIKE ? OR c.phone LIKE ? OR c.email LIKE ? ORDER BY c.name LIMIT ? OFFSET ?");
     $stmt->bind_param('sssii', $like, $like, $like, $per_page, $offset);
 } else {
     $total_stmt = $db->prepare("SELECT COUNT(*) FROM customers"); $total_stmt->execute(); $total_stmt->bind_result($total); $total_stmt->fetch(); $total_stmt->close();
-    $stmt = $db->prepare("SELECT c.*, (SELECT COUNT(*) FROM orders o WHERE o.customer_id=c.id) AS order_count FROM customers c ORDER BY c.name LIMIT ? OFFSET ?");
+    $stmt = $db->prepare("SELECT c.*, (SELECT COUNT(*) FROM orders o WHERE o.customer_id=c.id) AS order_count, COALESCE(cp.points,0) AS points FROM customers c LEFT JOIN customer_points cp ON cp.customer_id=c.id ORDER BY c.name LIMIT ? OFFSET ?");
     $stmt->bind_param('ii', $per_page, $offset);
 }
 $stmt->execute();
@@ -53,11 +53,11 @@ require_once __DIR__ . '/../../includes/header.php';
   <div class="card-body p-0">
     <table class="table table-hover align-middle mb-0">
       <thead class="table-light">
-        <tr><th>Nama</th><th>Telepon</th><th>Email</th><th>Alamat</th><th class="text-center">Order</th><th class="text-center">Aksi</th></tr>
+        <tr><th>Nama</th><th>Telepon</th><th>Email</th><th>Alamat</th><th class="text-center">Order</th><th class="text-center">Poin</th><th class="text-center">Aksi</th></tr>
       </thead>
       <tbody>
       <?php if (empty($customers)): ?>
-        <tr><td colspan="6" class="text-center text-muted py-4">Tidak ada data pelanggan</td></tr>
+        <tr><td colspan="7" class="text-center text-muted py-4">Tidak ada data pelanggan</td></tr>
       <?php else: foreach ($customers as $c): ?>
         <tr>
           <td class="fw-medium"><?= h($c['name']) ?></td>
@@ -65,8 +65,10 @@ require_once __DIR__ . '/../../includes/header.php';
           <td class="text-muted small"><?= h($c['email'] ?? '-') ?></td>
           <td class="text-muted small" style="max-width:160px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><?= h($c['address'] ?? '-') ?></td>
           <td class="text-center"><span class="badge bg-primary-subtle text-primary"><?= $c['order_count'] ?></span></td>
+          <td class="text-center"><span class="badge bg-warning-subtle text-warning"><?= $c['points'] ?></span></td>
           <td class="text-center">
             <div class="d-flex gap-1 justify-content-center">
+              <a href="<?= APP_URL ?>/pages/customers/view.php?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-info" title="Detail"><i class="bi bi-eye"></i></a>
               <?php if (can('deposits.view')): ?><a href="<?= APP_URL ?>/pages/deposits/index.php?customer_id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-success" title="Deposit"><i class="bi bi-wallet2"></i></a><?php endif; ?>
               <?php if (can('customers.edit')): ?>
               <a href="<?= APP_URL ?>/pages/customers/edit.php?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
