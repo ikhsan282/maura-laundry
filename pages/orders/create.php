@@ -128,7 +128,7 @@ require_once __DIR__ . '/../../includes/header.php';
         <div class="card-body">
           <div class="row g-2">
             <div class="col-md-8">
-              <select name="customer_id" class="form-select" required id="customerSelect">
+              <select name="customer_id" class="form-select ts-select" required id="customerSelect">
                 <option value="">-- Pilih Pelanggan --</option>
                 <?php foreach ($customers as $c): ?>
                   <option value="<?= $c['id'] ?>" data-phone="<?= h($c['phone']) ?>"
@@ -237,7 +237,7 @@ function addRow() {
   const tr = document.createElement('tr');
   tr.id   = `row_${idx}`;
   tr.innerHTML = `
-    <td><select name="service_id[]" class="form-select form-select-sm" onchange="onServiceChange(${idx})" required>
+    <td><select name="service_id[]" class="form-select form-select-sm ts-service" id="service_${idx}" onchange="onServiceChange(${idx})" required>
       <option value="">Pilih layanan</option>${opts}
     </select></td>
     <td><div class="input-group input-group-sm">
@@ -248,6 +248,7 @@ function addRow() {
     <td><span id="sub_${idx}" class="fw-medium small">—</span></td>
     <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeRow(${idx})"><i class="bi bi-trash"></i></button></td>`;
   body.appendChild(tr);
+  new TomSelect('#service_'+idx, {});
 }
 
 function onServiceChange(idx) {

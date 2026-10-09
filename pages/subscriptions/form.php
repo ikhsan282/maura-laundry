@@ -107,7 +107,7 @@ require_once __DIR__ . '/../../includes/header.php';
       <div class="card border-0 shadow-sm mb-3"><div class="card-body">
         <div class="row g-3">
           <div class="col-md-6"><label class="form-label">Pelanggan <span class="text-danger">*</span></label>
-            <select name="customer_id" class="form-select" required>
+            <select name="customer_id" class="form-select ts-select" required>
               <option value="">-- Pilih Pelanggan --</option>
               <?php foreach ($customers as $c): ?><option value="<?= $c['id'] ?>" <?= (int)$sub['customer_id'] === (int)$c['id'] ? 'selected' : '' ?>><?= h($c['name']) ?><?= $c['phone'] ? ' (' . h($c['phone']) . ')' : '' ?></option><?php endforeach; ?>
             </select></div>
