@@ -45,6 +45,9 @@ function nav_link(string $href, string $icon, string $label, string $current): s
     <li class="nav-item-label px-2 mt-3 mb-1 small text-uppercase text-secondary fw-semibold" style="font-size:.65rem;letter-spacing:.08em">Keuangan</li>
     <?= nav_link('/pages/payments/index.php', 'cash-coin', 'Pembayaran', $current) ?>
     <?php endif; ?>
+    <?php if (can('deposits.view')): ?>
+    <?= nav_link('/pages/deposits/index.php', 'wallet2', 'Deposit Pelanggan', $current) ?>
+    <?php endif; ?>
 
     <?php if (can('reports.view')): ?>
     <li class="nav-item-label px-2 mt-3 mb-1 small text-uppercase text-secondary fw-semibold" style="font-size:.65rem;letter-spacing:.08em">Laporan</li>

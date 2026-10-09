@@ -67,6 +67,7 @@ require_once __DIR__ . '/../../includes/header.php';
           <td class="text-center"><span class="badge bg-primary-subtle text-primary"><?= $c['order_count'] ?></span></td>
           <td class="text-center">
             <div class="d-flex gap-1 justify-content-center">
+              <?php if (can('deposits.view')): ?><a href="<?= APP_URL ?>/pages/deposits/index.php?customer_id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-success" title="Deposit"><i class="bi bi-wallet2"></i></a><?php endif; ?>
               <?php if (can('customers.edit')): ?>
               <a href="<?= APP_URL ?>/pages/customers/edit.php?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
               <?php endif; ?>

@@ -93,6 +93,17 @@ CREATE TABLE `orders` (
   `customer_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `status` enum('diterima','dicuci','disetrika','selesai','diambil') NOT NULL DEFAULT 'diterima',
+  `service_type` enum('none','pickup','delivery','both') NOT NULL DEFAULT 'none',
+  `pickup_address` text DEFAULT NULL,
+  `pickup_contact` varchar(100) DEFAULT NULL,
+  `pickup_fee` decimal(10,2) NOT NULL DEFAULT 0 CHECK (pickup_fee >= 0),
+  `pickup_scheduled_at` datetime DEFAULT NULL,
+  `pickup_status` enum('not_required','scheduled','on_the_way','picked_up','cancelled') NOT NULL DEFAULT 'not_required',
+  `delivery_address` text DEFAULT NULL,
+  `delivery_contact` varchar(100) DEFAULT NULL,
+  `delivery_fee` decimal(10,2) NOT NULL DEFAULT 0 CHECK (delivery_fee >= 0),
+  `delivery_scheduled_at` datetime DEFAULT NULL,
+  `delivery_status` enum('not_required','scheduled','on_the_way','delivered','cancelled') NOT NULL DEFAULT 'not_required',
   `notes` text DEFAULT NULL,
   `total_amount` decimal(10,2) NOT NULL DEFAULT 0,
   `estimated_done` date DEFAULT NULL,
@@ -121,20 +132,45 @@ CREATE TABLE `order_items` (
   CONSTRAINT `oi_service` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Customer deposit ledger (balance is always SUM(amount); rows are immutable)
+CREATE TABLE `customer_deposit_transactions` (
+  `id` bigint(20) NOT NULL AUTO_INCREMENT,
+  `customer_id` int(11) NOT NULL,
+  `order_id` int(11) DEFAULT NULL,
+  `user_id` int(11) NOT NULL,
+  `type` enum('topup','debit','refund') NOT NULL,
+  `amount` decimal(10,2) NOT NULL COMMENT 'Signed: credit positive, debit negative',
+  `method` enum('cash','transfer','internal') NOT NULL DEFAULT 'cash',
+  `reference` varchar(100) DEFAULT NULL,
+  `notes` varchar(255) DEFAULT NULL,
+  `created_at` datetime NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_deposit_customer_created` (`customer_id`,`created_at`),
+  KEY `deposit_order_id` (`order_id`),
+  KEY `deposit_user_id` (`user_id`),
+  CONSTRAINT `dt_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `dt_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `dt_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE RESTRICT,
+  CONSTRAINT `chk_deposit_amount` CHECK ((`type`='debit' AND `amount` < 0) OR (`type` IN ('topup','refund') AND `amount` > 0))
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Payments
 CREATE TABLE `payments` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `order_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `amount` decimal(10,2) NOT NULL,
-  `method` enum('tunai','transfer') NOT NULL DEFAULT 'tunai',
+  `method` enum('tunai','transfer','deposit') NOT NULL DEFAULT 'tunai',
+  `deposit_transaction_id` bigint(20) DEFAULT NULL,
   `reference` varchar(100) DEFAULT NULL,
   `paid_at` datetime DEFAULT CURRENT_TIMESTAMP,
   PRIMARY KEY (`id`),
   KEY `order_id` (`order_id`),
   KEY `user_id` (`user_id`),
+  UNIQUE KEY `deposit_transaction_id` (`deposit_transaction_id`),
   CONSTRAINT `p_order` FOREIGN KEY (`order_id`) REFERENCES `orders` (`id`),
-  CONSTRAINT `p_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  CONSTRAINT `p_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `p_deposit_transaction` FOREIGN KEY (`deposit_transaction_id`) REFERENCES `customer_deposit_transactions` (`id`) ON DELETE RESTRICT
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- ── Indexes ──────────────────────────────────────────────────────────────────
@@ -173,7 +209,9 @@ INSERT INTO `permissions` (`id`, `name`, `description`) VALUES
 (17, 'reports.view',      'Lihat laporan'),
 (18, 'users.view',        'Lihat pengguna'),
 (19, 'users.manage',      'Kelola pengguna'),
-(20, 'roles.manage',      'Kelola roles');
+(20, 'roles.manage',      'Kelola roles'),
+(21, 'deposits.view',     'Lihat saldo dan mutasi deposit'),
+(22, 'deposits.manage',   'Tambah, debit, dan refund deposit');
 
 -- Super Admin: all permissions
 INSERT INTO `role_permissions` (`role_id`, `permission_id`)
@@ -182,11 +220,11 @@ SELECT 1, id FROM `permissions`;
 -- Admin: all except users/roles manage
 INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
 (2,1),(2,2),(2,3),(2,4),(2,5),(2,6),(2,7),(2,8),(2,9),(2,10),
-(2,11),(2,12),(2,13),(2,14),(2,15),(2,16),(2,17),(2,18);
+(2,11),(2,12),(2,13),(2,14),(2,15),(2,16),(2,17),(2,18),(2,21),(2,22);
 
--- Kasir: dashboard, orders, customers view/create, payments
+-- Kasir: dashboard, orders, customers view/create, payments, deposits
 INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
-(3,1),(3,2),(3,3),(3,7),(3,8),(3,15),(3,16);
+(3,1),(3,2),(3,3),(3,7),(3,8),(3,15),(3,16),(3,21),(3,22);
 
 -- Operator: dashboard, orders view/status, customers view
 INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES

@@ -81,6 +81,7 @@ require_once __DIR__ . '/../../includes/header.php';
     <tr><td>Telepon</td><td>: <?= h($order['phone']) ?></td></tr>
     <tr><td>Est. Selesai</td><td>: <?= $order['estimated_done'] ? date('d/m/Y', strtotime($order['estimated_done'])) : '-' ?></td></tr>
     <tr><td>Kasir</td><td>: <?= h($order['staff_name']) ?></td></tr>
+    <?php if ($order['service_type'] !== 'none'): ?><tr><td>Antar/Jemput</td><td>: <?= h($order['service_type']) ?></td></tr><?php endif; ?>
   </table>
   <hr>
   <table style="width:100%;font-size:11px">
@@ -170,6 +171,17 @@ require_once __DIR__ . '/../../includes/header.php';
       </div>
     </div>
 
+    <!-- Transport -->
+    <?php if ($order['service_type'] !== 'none'): ?>
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-header bg-white fw-semibold"><i class="bi bi-truck me-2 text-primary"></i>Pickup / Delivery</div>
+      <div class="card-body row g-3">
+        <?php if (in_array($order['service_type'], ['pickup','both'], true)): ?><div class="col-md-6"><div class="fw-semibold">Pickup — <?= h(ucwords(str_replace('_',' ', $order['pickup_status']))) ?></div><div class="small"><?= h($order['pickup_address']) ?></div><div class="small text-muted"><?= h($order['pickup_contact'] ?: '-') ?> · <?= $order['pickup_scheduled_at'] ? date('d/m/Y H:i', strtotime($order['pickup_scheduled_at'])) : 'Belum dijadwalkan' ?></div><div><?= idr($order['pickup_fee']) ?></div><?php if(can('orders.status')): ?><form method="post" action="<?= APP_URL ?>/pages/orders/update-transport.php" class="d-flex gap-1 mt-2"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $order['id'] ?>"><input type="hidden" name="kind" value="pickup"><select name="status" class="form-select form-select-sm"><?php foreach(['scheduled','on_the_way','picked_up','cancelled'] as $s): ?><option value="<?= $s ?>" <?= $order['pickup_status']===$s?'selected':'' ?>><?= h($s) ?></option><?php endforeach; ?></select><button class="btn btn-sm btn-outline-primary">Simpan</button></form><?php endif; ?></div><?php endif; ?>
+        <?php if (in_array($order['service_type'], ['delivery','both'], true)): ?><div class="col-md-6"><div class="fw-semibold">Delivery — <?= h(ucwords(str_replace('_',' ', $order['delivery_status']))) ?></div><div class="small"><?= h($order['delivery_address']) ?></div><div class="small text-muted"><?= h($order['delivery_contact'] ?: '-') ?> · <?= $order['delivery_scheduled_at'] ? date('d/m/Y H:i', strtotime($order['delivery_scheduled_at'])) : 'Belum dijadwalkan' ?></div><div><?= idr($order['delivery_fee']) ?></div><?php if(can('orders.status')): ?><form method="post" action="<?= APP_URL ?>/pages/orders/update-transport.php" class="d-flex gap-1 mt-2"><?= csrf_field() ?><input type="hidden" name="id" value="<?= $order['id'] ?>"><input type="hidden" name="kind" value="delivery"><select name="status" class="form-select form-select-sm"><?php foreach(['scheduled','on_the_way','delivered','cancelled'] as $s): ?><option value="<?= $s ?>" <?= $order['delivery_status']===$s?'selected':'' ?>><?= h($s) ?></option><?php endforeach; ?></select><button class="btn btn-sm btn-outline-primary">Simpan</button></form><?php endif; ?></div><?php endif; ?>
+      </div>
+    </div>
+    <?php endif; ?>
+
     <!-- Tracking -->
     <div class="card border-0 shadow-sm">
       <div class="card-header bg-white fw-semibold"><i class="bi bi-geo-alt me-2 text-primary"></i>Tracking Status</div>
@@ -233,7 +245,7 @@ require_once __DIR__ . '/../../includes/header.php';
           <div class="small text-muted mb-1">Riwayat Bayar</div>
           <?php foreach ($payments as $p): ?>
             <div class="d-flex justify-content-between small">
-              <span><?= date('d/m/Y', strtotime($p['paid_at'])) ?> — <?= $p['method'] === 'tunai' ? 'Tunai' : 'Transfer' ?></span>
+              <span><?= date('d/m/Y', strtotime($p['paid_at'])) ?> — <?= $p['method'] === 'deposit' ? 'Deposit' : ($p['method'] === 'tunai' ? 'Tunai' : 'Transfer') ?></span>
               <span class="text-success"><?= idr($p['amount']) ?></span>
             </div>
           <?php endforeach; ?>

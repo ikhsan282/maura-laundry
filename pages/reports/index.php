@@ -23,6 +23,7 @@ require_once __DIR__ . '/../../includes/header.php';
   <li class="nav-item"><a class="nav-link <?= $type==='daily'?'active':'' ?>" href="?type=daily">Harian</a></li>
   <li class="nav-item"><a class="nav-link <?= $type==='monthly'?'active':'' ?>" href="?type=monthly">Bulanan</a></li>
   <li class="nav-item"><a class="nav-link <?= $type==='service'?'active':'' ?>" href="?type=service">Per Layanan</a></li>
+  <li class="nav-item"><a class="nav-link <?= $type==='transport'?'active':'' ?>" href="?type=transport">Pickup / Delivery</a></li>
 </ul>
 
 <?php if ($type === 'daily'): ?>
@@ -229,6 +230,16 @@ $grand = array_sum(array_column($rows, 'revenue'));
     </table>
   </div>
 </div>
+<?php elseif ($type === 'transport'): ?>
+<?php
+$stmt = $db->prepare("SELECT service_type,COUNT(*) AS order_count,SUM(pickup_fee) AS pickup_fees,SUM(delivery_fee) AS delivery_fees,SUM(total_amount) AS order_total FROM orders WHERE service_type<>'none' AND DATE(created_at) BETWEEN ? AND ? GROUP BY service_type ORDER BY service_type");
+$stmt->bind_param('ss', $date_from, $date_to); $stmt->execute();
+$rows = $stmt->get_result()->fetch_all(MYSQLI_ASSOC); $stmt->close();
+?>
+<div class="card border-0 shadow-sm mb-3"><div class="card-body py-2"><form method="get" class="row g-2 align-items-center"><input type="hidden" name="type" value="transport"><div class="col-auto"><input type="date" name="date_from" class="form-control form-control-sm" value="<?= h($date_from) ?>"></div><div class="col-auto"><input type="date" name="date_to" class="form-control form-control-sm" value="<?= h($date_to) ?>"></div><div class="col-auto"><button class="btn btn-sm btn-primary">Tampilkan</button></div></form></div></div>
+<div class="card border-0 shadow-sm"><div class="card-header bg-white fw-semibold">Pickup / Delivery</div><div class="card-body p-0"><table class="table align-middle mb-0"><thead class="table-light"><tr><th>Tipe</th><th class="text-center">Order</th><th class="text-end">Biaya Pickup</th><th class="text-end">Biaya Delivery</th><th class="text-end">Total Order</th></tr></thead><tbody>
+<?php if (!$rows): ?><tr><td colspan="5" class="text-center text-muted py-4">Tidak ada data</td></tr><?php else: foreach ($rows as $r): ?><tr><td><?= h(ucfirst($r['service_type'])) ?></td><td class="text-center"><?= $r['order_count'] ?></td><td class="text-end"><?= idr($r['pickup_fees']) ?></td><td class="text-end"><?= idr($r['delivery_fees']) ?></td><td class="text-end fw-bold"><?= idr($r['order_total']) ?></td></tr><?php endforeach; endif; ?>
+</tbody></table></div></div>
 <?php endif; ?>
 
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

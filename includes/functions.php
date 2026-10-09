@@ -42,6 +42,25 @@ function idr(float $amount): string {
     return 'Rp ' . number_format($amount, 0, ',', '.');
 }
 
+function transport_fee(string $type, float $pickup_fee, float $delivery_fee): float {
+    if (!in_array($type, ['none', 'pickup', 'delivery', 'both'], true)) {
+        throw new InvalidArgumentException('Tipe pickup/delivery tidak valid.');
+    }
+    return ($type === 'pickup' || $type === 'both' ? $pickup_fee : 0)
+         + ($type === 'delivery' || $type === 'both' ? $delivery_fee : 0);
+}
+
+function order_grand_total(float $items_total, string $type, float $pickup_fee, float $delivery_fee): float {
+    return $items_total + transport_fee($type, $pickup_fee, $delivery_fee);
+}
+
+function deposit_delta(string $type, float $amount): float {
+    if ($amount <= 0 || !in_array($type, ['topup', 'debit', 'refund'], true)) {
+        throw new InvalidArgumentException('Transaksi deposit tidak valid.');
+    }
+    return $type === 'debit' ? -$amount : $amount;
+}
+
 // Generate order number: ML-YYYYMMDD-XXXX
 function generate_order_number(): string {
     $db   = db();

@@ -10,7 +10,7 @@ $order_id = (int)($_GET['order_id'] ?? 0);
 $errors   = [];
 
 $stmt = $db->prepare(
-    "SELECT o.*, c.name AS customer_name
+    "SELECT o.*, c.name AS customer_name, c.id AS customer_id
      FROM orders o JOIN customers c ON c.id = o.customer_id
      WHERE o.id = ?"
 );
@@ -18,6 +18,11 @@ $stmt->bind_param('i', $order_id); $stmt->execute();
 $order = $stmt->get_result()->fetch_assoc(); $stmt->close();
 
 if (!$order) { flash('error', 'Order tidak ditemukan.'); redirect(APP_URL . '/pages/orders/index.php'); }
+
+// Get customer deposit balance
+$stmt = $db->prepare("SELECT COALESCE(SUM(amount),0) AS balance FROM customer_deposit_transactions WHERE customer_id=?");
+$stmt->bind_param('i', $order['customer_id']); $stmt->execute();
+$customer_balance = (float)$stmt->get_result()->fetch_assoc()['balance']; $stmt->close();
 
 // Already paid total
 $stmt = $db->prepare("SELECT COALESCE(SUM(amount),0) FROM payments WHERE order_id = ?");
@@ -32,17 +37,53 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
     if ($amount <= 0)                             $errors[] = 'Jumlah pembayaran harus lebih dari 0.';
     if ($amount > $remaining + 0.01)              $errors[] = 'Jumlah melebihi sisa tagihan ' . idr($remaining) . '.';
-    if (!in_array($method, ['tunai','transfer'])) $errors[] = 'Metode pembayaran tidak valid.';
+    if (!in_array($method, ['tunai','transfer','deposit'])) $errors[] = 'Metode pembayaran tidak valid.';
+    if ($method === 'deposit' && abs($amount - $remaining) > 0.01) $errors[] = 'Pembayaran dari deposit harus tepat sebesar sisa tagihan ' . idr($remaining) . '.';
+    if ($method === 'deposit' && $amount > $customer_balance + 0.01) $errors[] = 'Saldo deposit tidak mencukupi. Saldo saat ini: ' . idr($customer_balance) . '.';
 
     if (empty($errors)) {
-        $user_id = $_SESSION['user_id'];
-        $stmt = $db->prepare("INSERT INTO payments (order_id,user_id,amount,method,reference) VALUES (?,?,?,?,?)");
-        $stmt->bind_param('iidss', $order_id, $user_id, $amount, $method, $reference ?: null);
-        $stmt->execute(); $stmt->close();
+        $user_id = (int)$_SESSION['user_id'];
+        $db->begin_transaction();
+        try {
+            // Serialize payments for this order and re-check the balance due.
+            $lock = $db->prepare("SELECT total_amount FROM orders WHERE id=? FOR UPDATE");
+            $lock->bind_param('i', $order_id); $lock->execute();
+            $locked_order = $lock->get_result()->fetch_assoc(); $lock->close();
+            if (!$locked_order) throw new RuntimeException('Order tidak ditemukan.');
+            $lock = $db->prepare("SELECT COALESCE(SUM(amount),0) AS paid FROM payments WHERE order_id=?");
+            $lock->bind_param('i', $order_id); $lock->execute();
+            $locked_paid = (float)$lock->get_result()->fetch_assoc()['paid']; $lock->close();
+            $locked_remaining = max(0, (float)$locked_order['total_amount'] - $locked_paid);
+            if ($amount > $locked_remaining + 0.01) throw new RuntimeException('Sisa tagihan berubah menjadi ' . idr($locked_remaining) . '.');
+            if ($method === 'deposit' && abs($amount - $locked_remaining) > 0.01) throw new RuntimeException('Pembayaran deposit harus sebesar sisa tagihan ' . idr($locked_remaining) . '.');
 
-        // If fully paid and status is still diterima/dicuci, don't auto-advance — keep manual
-        flash('success', 'Pembayaran sebesar ' . idr($amount) . ' berhasil dicatat.');
-        redirect(APP_URL . '/pages/orders/view.php?order_number=' . urlencode($order['order_number']));
+            $deposit_id = null;
+            if ($method === 'deposit') {
+                // The customer-row lock serializes concurrent deposit payments.
+                $lock = $db->prepare("SELECT id FROM customers WHERE id=? FOR UPDATE");
+                $lock->bind_param('i', $order['customer_id']); $lock->execute(); $lock->store_result(); $lock->close();
+                $lock = $db->prepare("SELECT COALESCE(SUM(amount),0) AS balance FROM customer_deposit_transactions WHERE customer_id=?");
+                $lock->bind_param('i', $order['customer_id']); $lock->execute();
+                $locked_balance = (float)$lock->get_result()->fetch_assoc()['balance']; $lock->close();
+                if ($locked_balance + 0.001 < $amount) throw new RuntimeException('Saldo deposit berubah dan tidak lagi mencukupi.');
+                $signed = -$amount;
+                $deposit_method = 'internal';
+                $note = 'Pembayaran order ' . $order['order_number'];
+                $ledger = $db->prepare("INSERT INTO customer_deposit_transactions (customer_id,order_id,user_id,type,amount,method,reference,notes) VALUES (?,?,?,'debit',?,?,NULL,?)");
+                $ledger->bind_param('iiidss', $order['customer_id'], $order_id, $user_id, $signed, $deposit_method, $note);
+                $ledger->execute(); $deposit_id = $db->insert_id; $ledger->close();
+            }
+            $stmt = $db->prepare("INSERT INTO payments (order_id,user_id,amount,method,deposit_transaction_id,reference) VALUES (?,?,?,?,?,?)");
+            $ref = $reference ?: null;
+            $stmt->bind_param('iidsis', $order_id, $user_id, $amount, $method, $deposit_id, $ref);
+            $stmt->execute(); $stmt->close();
+            $db->commit();
+            flash('success', 'Pembayaran sebesar ' . idr($amount) . ' berhasil dicatat.');
+            redirect(APP_URL . '/pages/orders/view.php?order_number=' . urlencode($order['order_number']));
+        } catch (Throwable $e) {
+            $db->rollback();
+            $errors[] = 'Pembayaran gagal: ' . $e->getMessage();
+        }
     }
 }
 
@@ -103,6 +144,11 @@ require_once __DIR__ . '/../../includes/header.php';
                 <input class="form-check-input" type="radio" name="method" id="transfer" value="transfer"
                        <?= ($_POST['method'] ?? '') === 'transfer' ? 'checked' : '' ?> onchange="toggleRef(this)">
                 <label class="form-check-label" for="transfer"><i class="bi bi-phone me-1"></i>Transfer</label>
+              </div>
+              <div class="form-check">
+                <input class="form-check-input" type="radio" name="method" id="deposit" value="deposit"
+                       <?= ($_POST['method'] ?? '') === 'deposit' ? 'checked' : '' ?> onchange="toggleRef(this)">
+                <label class="form-check-label" for="deposit"><i class="bi bi-wallet2 me-1"></i>Saldo Deposit (<?= idr($customer_balance) ?>)</label>
               </div>
             </div>
           </div>

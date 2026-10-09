@@ -20,6 +20,7 @@ $orders = [];
 if ($customer) {
     $stmt = $db->prepare("
         SELECT o.id, o.order_number, o.status, o.total_amount, o.created_at, o.estimated_done, o.notes,
+               o.service_type,o.pickup_status,o.delivery_status,o.pickup_scheduled_at,o.delivery_scheduled_at,
                (SELECT COUNT(*) FROM order_items WHERE order_id = o.id) as item_count,
                (SELECT COALESCE(SUM(amount),0) FROM payments WHERE order_id = o.id) as paid
         FROM orders o
@@ -30,6 +31,17 @@ if ($customer) {
     $stmt->execute();
     $orders = $stmt->get_result()->fetch_all(MYSQLI_ASSOC);
     $stmt->close();
+}
+
+$deposit_balance = 0.0;
+$deposit_transactions = [];
+if ($customer) {
+    $stmt_bal = $db->prepare("SELECT COALESCE(SUM(amount),0) AS balance FROM customer_deposit_transactions WHERE customer_id=?");
+    $stmt_bal->bind_param('i', $customer['id']); $stmt_bal->execute();
+    $deposit_balance = (float)$stmt_bal->get_result()->fetch_assoc()['balance']; $stmt_bal->close();
+    $stmt_tx = $db->prepare("SELECT type,amount,reference,notes,created_at FROM customer_deposit_transactions WHERE customer_id=? ORDER BY created_at DESC,id DESC LIMIT 20");
+    $stmt_tx->bind_param('i', $customer['id']); $stmt_tx->execute();
+    $deposit_transactions = $stmt_tx->get_result()->fetch_all(MYSQLI_ASSOC); $stmt_tx->close();
 }
 
 // Recent 5 orders
@@ -164,6 +176,12 @@ body{padding-bottom:76px;background:var(--bs-body-bg)}
 <p class="mb-1"><i class="bi bi-phone"></i> <?=h($customer['phone']??'-')?></p>
 <p class="mb-0 small text-muted"><?=h($customer['address']??'-')?></p>
 </div>
+<hr>
+<div>
+<strong>Saldo Deposit</strong>
+<p class="fs-4 fw-bold text-primary mb-0"><?=idr($deposit_balance)?></p>
+<?php if ($deposit_transactions): ?><div class="small mt-2"><?php foreach ($deposit_transactions as $tx): ?><div class="d-flex justify-content-between"><span><?=h(ucfirst($tx['type']))?> · <?=date('d/m/Y',strtotime($tx['created_at']))?></span><span class="<?= $tx['amount'] >= 0 ? 'text-success' : 'text-danger' ?>"><?=($tx['amount'] >= 0 ? '+' : '') . idr($tx['amount'])?></span></div><?php endforeach; ?></div><?php else: ?><div class="small text-muted">Belum ada mutasi.</div><?php endif; ?>
+</div>
 <?php endif;?>
 <hr>
 <a class="btn btn-danger w-100" href="<?=APP_URL?>/auth/logout.php"><i class="bi bi-box-arrow-right"></i> Keluar</a>
@@ -197,6 +215,7 @@ document.querySelectorAll('.order-card').forEach(c=>c.onclick=()=>{
 <p class="mb-1"><strong>Total:</strong> ${new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(o.total_amount)}</p>
 <p class="mb-1"><strong>Dibayar:</strong> ${new Intl.NumberFormat('id-ID',{style:'currency',currency:'IDR',minimumFractionDigits:0}).format(o.paid)}</p>
 <p class="mb-1"><strong>Tanggal:</strong> ${new Date(o.created_at).toLocaleDateString('id-ID')}</p>
+${o.service_type!=='none'?`<p class="mb-1"><strong>Antar/Jemput:</strong> ${escHtml(o.service_type)}${o.pickup_status!=='not_required'?' · Pickup '+escHtml(o.pickup_status):''}${o.delivery_status!=='not_required'?' · Delivery '+escHtml(o.delivery_status):''}</p>`:''}
 ${o.estimated_done?`<p class="mb-0"><strong>Estimasi Selesai:</strong> ${new Date(o.estimated_done).toLocaleDateString('id-ID')}</p>`:''}
 ${o.notes?`<hr><small class="text-muted">${escHtml(o.notes)}</small>`:''}
 </div>

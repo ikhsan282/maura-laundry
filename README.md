@@ -112,8 +112,17 @@ maura-laundry/
 - Halaman detail order: rincian item, total, histori status
 - Daftar order dengan filter & pencarian
 
+### Pickup / Delivery
+- Order mendukung tanpa antar-jemput, pickup, delivery, atau keduanya; alamat, kontak, jadwal, biaya, dan status operasional disimpan per order
+- Biaya pickup/delivery dihitung server-side ke total order dan tersedia pada daftar, detail, portal pelanggan, serta laporan
+
+### Deposit Pelanggan
+- Saldo berbasis ledger immutable (top-up, debit, refund/pengembalian dana) dengan histori petugas dan referensi
+- Kasir dapat membayar tepat sebesar sisa order dari saldo deposit; pengecekan saldo, debit ledger, dan payment dilakukan atomik dalam transaksi
+- Pelanggan hanya melihat saldo dan histori miliknya dari akun yang terhubung
+
 ### Pembayaran
-- Catat pembayaran per order; metode: tunai / transfer
+- Catat pembayaran per order; metode: tunai / transfer / saldo deposit
 - Daftar pembayaran dengan filter status & metode
 
 ### Laporan

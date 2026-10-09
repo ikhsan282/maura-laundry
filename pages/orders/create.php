@@ -21,9 +21,19 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     $notes        = trim($_POST['notes'] ?? '');
     $service_ids  = $_POST['service_id']  ?? [];
     $quantities   = $_POST['quantity']    ?? [];
+    $service_type = $_POST['service_type'] ?? 'none';
+    $pickup_address = trim($_POST['pickup_address'] ?? '');
+    $pickup_contact = trim($_POST['pickup_contact'] ?? '');
+    $pickup_fee = (float)($_POST['pickup_fee'] ?? 0);
+    $delivery_address = trim($_POST['delivery_address'] ?? '');
+    $delivery_contact = trim($_POST['delivery_contact'] ?? '');
+    $delivery_fee = (float)($_POST['delivery_fee'] ?? 0);
 
     if (!$customer_id)          $errors[] = 'Pilih pelanggan.';
     if (empty($service_ids))    $errors[] = 'Tambahkan minimal 1 layanan.';
+    if (!in_array($service_type, ['none','pickup','delivery','both'], true)) $errors[] = 'Tipe layanan tidak valid.';
+    if (($service_type === 'pickup' || $service_type === 'both') && !$pickup_address) $errors[] = 'Alamat pickup wajib diisi.';
+    if (($service_type === 'delivery' || $service_type === 'both') && !$delivery_address) $errors[] = 'Alamat delivery wajib diisi.';
 
     // Validate items
     $items       = [];
@@ -46,6 +56,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
         $items[]    = ['service_id' => $sid, 'quantity' => $qty, 'price' => $svc['price'], 'subtotal' => $subtotal];
     }
     if (empty($items)) $errors[] = 'Item order tidak valid.';
+    if ($pickup_fee < 0 || $delivery_fee < 0) $errors[] = 'Biaya pickup/delivery tidak boleh negatif.';
+    if (!$errors) $total = order_grand_total($total, $service_type, $pickup_fee, $delivery_fee);
 
     if (empty($errors)) {
         $order_number  = generate_order_number();
@@ -54,8 +66,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
 
         $db->begin_transaction();
         try {
-            $stmt = $db->prepare("INSERT INTO orders (order_number,customer_id,user_id,total_amount,estimated_done,notes) VALUES (?,?,?,?,?,?)");
-            $stmt->bind_param('siidss', $order_number, $customer_id, $user_id, $total, $estimated, $notes);
+            $pickup_status = in_array($service_type, ['pickup','both'], true) ? 'scheduled' : 'not_required';
+            $delivery_status = in_array($service_type, ['delivery','both'], true) ? 'scheduled' : 'not_required';
+            $pickup_at = null;
+            if (!empty($_POST['pickup_scheduled_at'])) {
+                $dt = DateTime::createFromFormat('!Y-m-d\TH:i', $_POST['pickup_scheduled_at']);
+                $date_errors = DateTime::getLastErrors();
+                if (!$dt || ($date_errors !== false && ($date_errors['warning_count'] || $date_errors['error_count']))) throw new Exception('Format jadwal pickup tidak valid.');
+                $pickup_at = $dt->format('Y-m-d H:i:s');
+            }
+            $delivery_at = null;
+            if (!empty($_POST['delivery_scheduled_at'])) {
+                $dt = DateTime::createFromFormat('!Y-m-d\TH:i', $_POST['delivery_scheduled_at']);
+                $date_errors = DateTime::getLastErrors();
+                if (!$dt || ($date_errors !== false && ($date_errors['warning_count'] || $date_errors['error_count']))) throw new Exception('Format jadwal delivery tidak valid.');
+                $delivery_at = $dt->format('Y-m-d H:i:s');
+            }
+            $stmt = $db->prepare("INSERT INTO orders (order_number,customer_id,user_id,total_amount,estimated_done,notes,service_type,pickup_address,pickup_contact,pickup_fee,pickup_scheduled_at,pickup_status,delivery_address,delivery_contact,delivery_fee,delivery_scheduled_at,delivery_status) VALUES (?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)");
+            $stmt->bind_param('siidsssssdssssdss', $order_number, $customer_id, $user_id, $total, $estimated, $notes, $service_type, $pickup_address, $pickup_contact, $pickup_fee, $pickup_at, $pickup_status, $delivery_address, $delivery_contact, $delivery_fee, $delivery_at, $delivery_status);
             $stmt->execute();
             $order_id = $db->insert_id;
             $stmt->close();
@@ -138,6 +166,17 @@ require_once __DIR__ . '/../../includes/header.php';
               </tbody>
             </table>
           </div>
+        </div>
+      </div>
+
+      <div class="card border-0 shadow-sm mb-3">
+        <div class="card-header bg-white fw-semibold"><i class="bi bi-truck me-2 text-primary"></i>Pickup / Delivery</div>
+        <div class="card-body">
+          <div class="mb-3"><label class="form-label">Jenis Layanan</label><select name="service_type" id="serviceType" class="form-select" onchange="toggleTransport();updateTotal()">
+            <?php foreach (['none'=>'Tanpa antar-jemput','pickup'=>'Pickup','delivery'=>'Delivery','both'=>'Pickup + Delivery'] as $v=>$label): ?><option value="<?= $v ?>" <?= ($_POST['service_type'] ?? 'none')===$v?'selected':'' ?>><?= $label ?></option><?php endforeach; ?>
+          </select></div>
+          <div id="pickupFields" class="row g-2 mb-2"><div class="col-md-6"><label class="form-label">Alamat Pickup</label><textarea name="pickup_address" class="form-control" rows="2"><?= h($_POST['pickup_address'] ?? '') ?></textarea></div><div class="col-md-6"><label class="form-label">Kontak Pickup</label><input name="pickup_contact" class="form-control" value="<?= h($_POST['pickup_contact'] ?? '') ?>"><label class="form-label mt-2">Jadwal</label><input type="datetime-local" name="pickup_scheduled_at" class="form-control" value="<?= h($_POST['pickup_scheduled_at'] ?? '') ?>"></div><div class="col-md-4"><label class="form-label">Biaya Pickup</label><input type="number" min="0" step="1" id="pickupFee" name="pickup_fee" class="form-control" value="<?= h($_POST['pickup_fee'] ?? 0) ?>" oninput="updateTotal()"></div></div>
+          <div id="deliveryFields" class="row g-2"><div class="col-md-6"><label class="form-label">Alamat Delivery</label><textarea name="delivery_address" class="form-control" rows="2"><?= h($_POST['delivery_address'] ?? '') ?></textarea></div><div class="col-md-6"><label class="form-label">Kontak Delivery</label><input name="delivery_contact" class="form-control" value="<?= h($_POST['delivery_contact'] ?? '') ?>"><label class="form-label mt-2">Jadwal</label><input type="datetime-local" name="delivery_scheduled_at" class="form-control" value="<?= h($_POST['delivery_scheduled_at'] ?? '') ?>"></div><div class="col-md-4"><label class="form-label">Biaya Delivery</label><input type="number" min="0" step="1" id="deliveryFee" name="delivery_fee" class="form-control" value="<?= h($_POST['delivery_fee'] ?? 0) ?>" oninput="updateTotal()"></div></div>
         </div>
       </div>
 
@@ -250,6 +289,9 @@ function updateTotal() {
     total   += price * qty;
     maxDays  = Math.max(maxDays, days);
   });
+  const type = document.getElementById('serviceType')?.value || 'none';
+  if (type === 'pickup' || type === 'both') total += parseFloat(document.getElementById('pickupFee')?.value || 0);
+  if (type === 'delivery' || type === 'both') total += parseFloat(document.getElementById('deliveryFee')?.value || 0);
   document.getElementById('totalDisplay').textContent = 'Rp ' + total.toLocaleString('id-ID');
   document.getElementById('totalInput').value          = total;
   if (maxDays) {
@@ -260,7 +302,14 @@ function updateTotal() {
   }
 }
 
+function toggleTransport() {
+  const type = document.getElementById('serviceType').value;
+  document.getElementById('pickupFields').style.display = ['pickup','both'].includes(type) ? '' : 'none';
+  document.getElementById('deliveryFields').style.display = ['delivery','both'].includes(type) ? '' : 'none';
+}
+
 // Auto-add one row
 addRow();
+toggleTransport();
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

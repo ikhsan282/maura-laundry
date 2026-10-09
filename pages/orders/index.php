@@ -39,7 +39,7 @@ if ($params) $stmt->bind_param($types, ...$params);
 $stmt->execute(); $stmt->bind_result($total); $stmt->fetch(); $stmt->close();
 
 // Fetch
-$sql  = "SELECT o.id, o.order_number, o.status, o.total_amount, o.estimated_done, o.created_at,
+$sql  = "SELECT o.id, o.order_number, o.status, o.service_type, o.pickup_status, o.delivery_status, o.total_amount, o.estimated_done, o.created_at,
                 c.name AS customer_name, c.phone,
                 u.name AS staff_name
          FROM orders o
@@ -121,19 +121,25 @@ require_once __DIR__ . '/../../includes/header.php';
       <table class="table table-hover align-middle mb-0">
         <thead class="table-light">
           <tr>
-            <th>No. Order</th><th>Pelanggan</th><th>Status</th>
+            <th>No. Order</th><th>Pelanggan</th><th>Antar/Jemput</th><th>Status</th>
             <th>Est. Selesai</th><th class="text-end">Total</th><th>Kasir</th><th>Tgl</th><th class="text-center">Aksi</th>
           </tr>
         </thead>
         <tbody>
         <?php if (empty($orders)): ?>
-          <tr><td colspan="8" class="text-center text-muted py-4">Tidak ada data order</td></tr>
+          <tr><td colspan="9" class="text-center text-muted py-4">Tidak ada data order</td></tr>
         <?php else: foreach ($orders as $o): ?>
           <tr>
             <td><span class="fw-medium font-monospace small"><?= h($o['order_number']) ?></span></td>
             <td>
               <div class="fw-medium"><?= h($o['customer_name']) ?></div>
               <div class="small text-muted"><?= h($o['phone']) ?></div>
+            </td>
+            <td>
+              <?php if ($o['service_type'] === 'none'): ?><span class="text-muted small">-</span><?php else: ?>
+                <span class="badge bg-info-subtle text-info"><?= $o['service_type'] === 'both' ? 'Pickup + Delivery' : ucfirst($o['service_type']) ?></span>
+                <div class="small text-muted"><?= $o['pickup_status'] !== 'not_required' ? 'P: '.h($o['pickup_status']) : '' ?> <?= $o['delivery_status'] !== 'not_required' ? 'D: '.h($o['delivery_status']) : '' ?></div>
+              <?php endif; ?>
             </td>
             <td><?= status_badge($o['status']) ?></td>
             <td class="small"><?= $o['estimated_done'] ? date('d/m/Y', strtotime($o['estimated_done'])) : '-' ?></td>
