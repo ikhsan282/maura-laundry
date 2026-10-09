@@ -44,10 +44,10 @@ function generate_subscription_order(mysqli $db, int $subscription_id, int $user
             $total    += (float)$it['price'] * (float)$it['quantity'];
             $max_days  = max($max_days, (int)$it['duration_days']);
         }
+        $type         = $sub['service_type'];
         $total = order_grand_total($total, $type, 0, 0);
         $order_number = generate_order_number();
         $estimated    = date('Y-m-d', strtotime("+{$max_days} days"));
-        $type         = $sub['service_type'];
         $addr         = $sub['address'] ?: null;
         $pickup_addr  = in_array($type, ['pickup', 'both'], true) ? $addr : null;
         $delivery_addr = in_array($type, ['delivery', 'both'], true) ? $addr : null;
