@@ -15,12 +15,24 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if (!csrf_verify()) {
         $error = 'Token keamanan tidak valid. Silakan coba lagi.';
     } else {
-        $username = trim($_POST['username'] ?? '');
-        $password = $_POST['password'] ?? '';
-
-        if ($username === '' || $password === '') {
-            $error = 'Username dan password wajib diisi.';
+        // Rate limiting: 5 attempts per 15 minutes
+        $_SESSION['login_attempts'] = $_SESSION['login_attempts'] ?? 0;
+        $_SESSION['last_attempt'] = $_SESSION['last_attempt'] ?? 0;
+        
+        if ($_SESSION['login_attempts'] >= 5 && (time() - $_SESSION['last_attempt']) < 900) {
+            $error = 'Terlalu banyak percobaan login. Coba lagi dalam ' . ceil((900 - (time() - $_SESSION['last_attempt'])) / 60) . ' menit.';
         } else {
+            // Reset if cooldown expired
+            if ((time() - $_SESSION['last_attempt']) >= 900) {
+                $_SESSION['login_attempts'] = 0;
+            }
+            
+            $username = trim($_POST['username'] ?? '');
+            $password = $_POST['password'] ?? '';
+
+            if ($username === '' || $password === '') {
+                $error = 'Username dan password wajib diisi.';
+            } else {
             $db   = db();
             $stmt = $db->prepare(
                 "SELECT u.*, r.name AS role_name FROM users u
@@ -36,7 +48,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             if ($user && password_verify($password, $user['password'])) {
                 if (!$user['email_verified']) {
                     $error = 'Email belum diverifikasi. Cek inbox email Anda.';
+                    $_SESSION['login_attempts']++;
+                    $_SESSION['last_attempt'] = time();
                 } else {
+                    // Reset on successful login
+                    $_SESSION['login_attempts'] = 0;
                     session_regenerate_id(true);
                     $_SESSION['user_id']   = $user['id'];
                     $_SESSION['user_name'] = $user['name'];
@@ -45,6 +61,8 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     redirect(APP_URL . ($user['role_id'] == 5 ? '/pages/portal.php' : '/pages/dashboard.php'));
                 }
             } else {
+                $_SESSION['login_attempts']++;
+                $_SESSION['last_attempt'] = time();
                 $error = 'Username atau password salah.';
             }
         }

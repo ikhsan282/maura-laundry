@@ -1,16 +1,18 @@
 <?php
-require_once __DIR__ . '/../../../config/config.php';
-require_once __DIR__ . '/../../../includes/functions.php';
-require_once __DIR__ . '/../../../includes/auth.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/auth.php';
 require_login();
 require_permission('users.manage');
 
-$db = db();
-$id = (int)($_GET['id'] ?? 0);
-
-if (!hash_equals($_SESSION['csrf_token'] ?? '', $_GET['csrf'] ?? '')) {
-    flash('error', 'Token keamanan tidak valid.'); redirect(APP_URL . '/pages/users/index.php');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_verify()) {
+    flash('error', 'Permintaan tidak valid.');
+    redirect(APP_URL . '/pages/users/index.php');
 }
+
+$db = db();
+$id = (int)($_POST['id'] ?? 0);
+
 if ($id === $_SESSION['user_id']) {
     flash('error', 'Tidak dapat menonaktifkan akun sendiri.'); redirect(APP_URL . '/pages/users/index.php');
 }

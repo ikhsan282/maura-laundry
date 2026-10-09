@@ -1,16 +1,17 @@
 <?php
-require_once __DIR__ . '/../../../config/config.php';
-require_once __DIR__ . '/../../../includes/functions.php';
-require_once __DIR__ . '/../../../includes/auth.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/auth.php';
 require_login();
 require_permission('customers.delete');
 
-$db = db();
-$id = (int)($_GET['id'] ?? 0);
-
-if (!hash_equals($_SESSION['csrf_token'] ?? '', $_GET['csrf'] ?? '')) {
-    flash('error', 'Token keamanan tidak valid.'); redirect(APP_URL . '/pages/customers/index.php');
+if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_verify()) {
+    flash('error', 'Permintaan tidak valid.');
+    redirect(APP_URL . '/pages/customers/index.php');
 }
+
+$db = db();
+$id = (int)($_POST['id'] ?? 0);
 
 // Check no orders
 $stmt = $db->prepare("SELECT COUNT(*) FROM orders WHERE customer_id = ?");
