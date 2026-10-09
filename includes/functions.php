@@ -46,6 +46,12 @@ function transport_fee(string $type, float $pickup_fee, float $delivery_fee): fl
     if (!in_array($type, ['none', 'pickup', 'delivery', 'both'], true)) {
         throw new InvalidArgumentException('Tipe pickup/delivery tidak valid.');
     }
+    // NAN/INF slip past `< 0`; decimal(10,2) columns cap at 99999999.99.
+    foreach ([$pickup_fee, $delivery_fee] as $fee) {
+        if (!is_finite($fee) || $fee < 0 || $fee > 99999999.99) {
+            throw new InvalidArgumentException('Biaya pickup/delivery tidak valid.');
+        }
+    }
     return ($type === 'pickup' || $type === 'both' ? $pickup_fee : 0)
          + ($type === 'delivery' || $type === 'both' ? $delivery_fee : 0);
 }
