@@ -57,8 +57,8 @@ $title = 'Login';
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Login — <?= APP_NAME ?></title>
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css">
-  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.3/font/bootstrap-icons.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.min.css">
   <style>
     body { background: linear-gradient(135deg,#0d6efd11 0%,#6610f211 100%); min-height:100vh; }
     .login-card { max-width:420px; border:none; border-radius:1rem; box-shadow:0 8px 32px rgba(0,0,0,.1); }
@@ -111,7 +111,7 @@ $title = 'Login';
     </div>
     <p class="text-center text-muted small mt-3">&copy; <?= date('Y') ?> <?= APP_NAME ?>. All rights reserved.</p>
   </div>
-  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/js/bootstrap.bundle.min.js"></script>
   <script>
     function togglePwd(btn) {
       const inp = btn.previousElementSibling;
