@@ -10,6 +10,11 @@ $title = $title ?? APP_NAME;
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title><?= h($title) ?> — <?= APP_NAME ?></title>
+  <meta name="theme-color" content="#0d6efd">
+  <link rel="manifest" href="<?= APP_URL ?>/manifest.json">
+  <script>
+  (function(){try{var t=localStorage.getItem('ml_theme');if(!t)t=matchMedia('(prefers-color-scheme:dark)').matches?'dark':'light';document.documentElement.setAttribute('data-theme',t);}catch(e){}})();
+  </script>
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.8/dist/css/bootstrap.min.css">
   <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.13.2/font/bootstrap-icons.min.css">
   <link rel="stylesheet" href="<?= APP_URL ?>/assets/css/style.css">
@@ -27,6 +32,9 @@ $title = $title ?? APP_NAME;
         <i class="bi bi-water me-1"></i><?= APP_NAME ?>
       </span>
       <div class="ms-auto d-flex align-items-center gap-2">
+        <button class="btn btn-sm btn-outline-secondary" id="darkToggle" title="Toggle tema">
+          <i class="bi bi-moon-stars"></i>
+        </button>
         <span class="badge bg-primary-subtle text-primary border border-primary-subtle">
           <?= h($user['role_name'] ?? '') ?>
         </span>

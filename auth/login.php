@@ -5,7 +5,8 @@ require_once __DIR__ . '/../../includes/auth.php';
 
 // Redirect if already logged in
 if (is_logged_in()) {
-    redirect(APP_URL . '/pages/dashboard.php');
+    $loggedUser = current_user();
+    redirect(APP_URL . (($loggedUser && $loggedUser['role_id'] == 5) ? '/pages/portal.php' : '/pages/dashboard.php'));
 }
 
 $error = '';
@@ -41,7 +42,7 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
                     $_SESSION['user_name'] = $user['name'];
                     $_SESSION['role_id']   = $user['role_id'];
                     flash('success', 'Selamat datang, ' . $user['name'] . '!');
-                    redirect(APP_URL . '/pages/dashboard.php');
+                    redirect(APP_URL . ($user['role_id'] == 5 ? '/pages/portal.php' : '/pages/dashboard.php'));
                 }
             } else {
                 $error = 'Username atau password salah.';

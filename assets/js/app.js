@@ -8,6 +8,25 @@ document.addEventListener('DOMContentLoaded', () => {
     toggle.addEventListener('click', () => sidebar.classList.toggle('collapsed'));
   }
 
+  // ── Dark mode ─────────────────────────────────────────────
+  const darkToggle = document.getElementById('darkToggle');
+  function syncThemeIcon() {
+    const icon = darkToggle?.querySelector('i');
+    if (icon) icon.className = document.documentElement.getAttribute('data-theme') === 'dark' ? 'bi bi-sun' : 'bi bi-moon-stars';
+  }
+  darkToggle?.addEventListener('click', () => {
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('ml_theme', next);
+    syncThemeIcon();
+  });
+  syncThemeIcon();
+
+  // Service worker
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register(APP_URL + '/sw.js').catch(() => {});
+  }
+
   // Auto-dismiss alerts after 4 s
   document.querySelectorAll('.alert.alert-dismissible').forEach(el => {
     setTimeout(() => {

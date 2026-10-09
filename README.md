@@ -91,6 +91,11 @@ maura-laundry/
 
 ## Fitur
 
+### PWA, Portal Pelanggan & Dark Mode
+- Aplikasi dapat dipasang di ponsel melalui `manifest.json` dan service worker, dengan halaman fallback saat offline
+- Portal mobile khusus Pelanggan untuk memantau status order, pembayaran, dan profil
+- Dark mode persisten mengikuti preferensi pengguna
+
 ### Dashboard
 - Statistik real-time: order hari ini, order pending, selesai belum diambil, pendapatan hari ini & bulan ini, total pelanggan
 - Tabel 8 order terbaru dengan status badge dan link langsung ke detail

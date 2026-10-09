@@ -3,6 +3,13 @@ require_once __DIR__ . '/../config/config.php';
 require_once __DIR__ . '/../includes/functions.php';
 require_once __DIR__ . '/../includes/auth.php';
 require_login();
+
+// Pelanggan role → portal only (prevents require_permission redirect loop)
+$portalUser = current_user();
+if ($portalUser && $portalUser['role_id'] == 5) {
+    redirect(APP_URL . '/pages/portal.php');
+}
+
 require_permission('dashboard.view');
 
 $db = db();

@@ -1,0 +1,37 @@
+{
+  "name": "Maura Laundry",
+  "short_name": "Maura",
+  "description": "Sistem Manajemen Laundry - Portal Pelanggan",
+  "start_url": "/maura-laundry/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#0d6efd",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/maura-laundry/assets/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any maskable"
+    },
+    {
+      "src": "/maura-laundry/assets/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any maskable"
+    }
+  ],
+  "categories": ["business", "productivity"],
+  "shortcuts": [
+    {
+      "name": "Portal Pelanggan",
+      "url": "/maura-laundry/pages/portal.php",
+      "description": "Cek status order Anda"
+    },
+    {
+      "name": "Dashboard",
+      "url": "/maura-laundry/pages/dashboard.php",
+      "description": "Dashboard admin"
+    }
+  ]
+}

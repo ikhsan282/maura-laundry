@@ -43,6 +43,7 @@ CREATE TABLE `users` (
   `name` varchar(100) NOT NULL,
   `username` varchar(50) NOT NULL,
   `email` varchar(150) NOT NULL,
+  `phone` varchar(20) DEFAULT NULL,
   `password` varchar(255) NOT NULL,
   `email_verified` tinyint(1) NOT NULL DEFAULT 0,
   `email_token` varchar(100) DEFAULT NULL,
@@ -60,12 +61,15 @@ CREATE TABLE `users` (
 -- Customers
 CREATE TABLE `customers` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
+  `user_id` int(11) DEFAULT NULL,
   `name` varchar(100) NOT NULL,
   `phone` varchar(20) DEFAULT NULL,
   `address` text DEFAULT NULL,
   `email` varchar(150) DEFAULT NULL,
   `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `user_id` (`user_id`),
+  CONSTRAINT `c_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Services
@@ -145,7 +149,8 @@ INSERT INTO `roles` (`id`, `name`, `description`) VALUES
 (1, 'Super Admin', 'Akses penuh ke seluruh sistem'),
 (2, 'Admin',       'Akses manajemen data dan laporan'),
 (3, 'Kasir',       'Akses order dan pembayaran'),
-(4, 'Operator',    'Akses order dan tracking status');
+(4, 'Operator',    'Akses order dan tracking status'),
+(5, 'Pelanggan',   'Akses portal pelanggan untuk tracking order sendiri');
 
 -- Seed: Permissions
 INSERT INTO `permissions` (`id`, `name`, `description`) VALUES
@@ -186,6 +191,10 @@ INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
 -- Operator: dashboard, orders view/status, customers view
 INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
 (4,1),(4,2),(4,6),(4,7);
+
+-- Pelanggan: portal only (no dashboard/orders access)
+INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
+(5,1);
 
 -- Seed: Default Super Admin user (password: Admin@1234)
 INSERT INTO `users` (`role_id`, `name`, `username`, `email`, `password`, `email_verified`) VALUES
