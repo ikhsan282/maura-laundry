@@ -40,12 +40,15 @@ require_once __DIR__ . '/../../includes/header.php';
             <div class="d-flex gap-1 justify-content-center">
               <a href="<?= APP_URL ?>/pages/users/edit.php?id=<?= $u['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
               <?php if ($u['id'] !== $_SESSION['user_id']): ?>
-              <a href="<?= APP_URL ?>/pages/users/toggle.php?id=<?= $u['id'] ?>&csrf=<?= csrf_token() ?>"
-                 class="btn btn-sm <?= $u['is_active'] ? 'btn-outline-warning' : 'btn-outline-success' ?>"
-                 data-confirm="<?= $u['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?> pengguna ini?"
-                 title="<?= $u['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>">
-                <i class="bi bi-<?= $u['is_active'] ? 'pause-circle' : 'play-circle' ?>"></i>
-              </a>
+              <form method="POST" action="<?= APP_URL ?>/pages/users/toggle.php" style="display:inline;margin:0">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="id" value="<?= $u['id'] ?>">
+                <button type="submit" class="btn btn-sm <?= $u['is_active'] ? 'btn-outline-warning' : 'btn-outline-success' ?>"
+                   onclick="return confirm('<?= $u['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?> pengguna ini?')"
+                   title="<?= $u['is_active'] ? 'Nonaktifkan' : 'Aktifkan' ?>">
+                  <i class="bi bi-<?= $u['is_active'] ? 'pause-circle' : 'play-circle' ?>"></i>
+                </button>
+              </form>
               <?php endif; ?>
             </div>
           </td>

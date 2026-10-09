@@ -49,8 +49,11 @@ foreach ($grouped as $type => $list):
             <div class="d-flex gap-1 justify-content-center">
               <a href="<?= APP_URL ?>/pages/services/edit.php?id=<?= $s['id'] ?>" class="btn btn-sm btn-outline-primary"><i class="bi bi-pencil"></i></a>
               <?php if (can('services.delete')): ?>
-              <a href="<?= APP_URL ?>/pages/services/delete.php?id=<?= $s['id'] ?>&csrf=<?= csrf_token() ?>"
-                 class="btn btn-sm btn-outline-danger" data-confirm="Hapus layanan ini?"><i class="bi bi-trash"></i></a>
+              <form method="POST" action="<?= APP_URL ?>/pages/services/delete.php" style="display:inline;margin:0">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="id" value="<?= $s['id'] ?>">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus layanan ini?')"><i class="bi bi-trash"></i></button>
+              </form>
               <?php endif; ?>
             </div>
           </td>

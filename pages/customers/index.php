@@ -72,8 +72,11 @@ require_once __DIR__ . '/../../includes/header.php';
               <a href="<?= APP_URL ?>/pages/customers/edit.php?id=<?= $c['id'] ?>" class="btn btn-sm btn-outline-primary" title="Edit"><i class="bi bi-pencil"></i></a>
               <?php endif; ?>
               <?php if (can('customers.delete') && $c['order_count'] == 0): ?>
-              <a href="<?= APP_URL ?>/pages/customers/delete.php?id=<?= $c['id'] ?>&csrf=<?= csrf_token() ?>"
-                 class="btn btn-sm btn-outline-danger" data-confirm="Hapus pelanggan <?= h($c['name']) ?>?"><i class="bi bi-trash"></i></a>
+              <form method="POST" action="<?= APP_URL ?>/pages/customers/delete.php" style="display:inline;margin:0">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <input type="hidden" name="id" value="<?= $c['id'] ?>">
+                <button type="submit" class="btn btn-sm btn-outline-danger" onclick="return confirm('Hapus pelanggan <?= h($c['name']) ?>?')"><i class="bi bi-trash"></i></button>
+              </form>
               <?php endif; ?>
             </div>
           </td>

@@ -150,9 +150,13 @@ require_once __DIR__ . '/../../includes/header.php';
               <div class="d-flex gap-1 justify-content-center">
                 <a href="<?= APP_URL ?>/pages/orders/view.php?order_number=<?= h($o['order_number']) ?>" class="btn btn-sm btn-outline-primary" title="Detail"><i class="bi bi-eye"></i></a>
                 <?php if (can('orders.status') && next_status($o['status'])): ?>
-                <a href="<?= APP_URL ?>/pages/orders/update-status.php?id=<?= $o['id'] ?>&csrf=<?= csrf_token() ?>"
-                   class="btn btn-sm btn-outline-success" title="Update Status" data-confirm="Update status order ini?"
-                ><i class="bi bi-arrow-right-circle"></i></a>
+                <form method="POST" action="<?= APP_URL ?>/pages/orders/update-status.php" style="display:inline;margin:0">
+                  <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                  <input type="hidden" name="id" value="<?= $o['id'] ?>">
+                  <button type="submit" class="btn btn-sm btn-outline-success" title="Update Status" onclick="return confirm('Update status order ini?')">
+                    <i class="bi bi-arrow-right-circle"></i>
+                  </button>
+                </form>
                 <?php endif; ?>
                 <?php if (can('payments.create') && !in_array($o['status'],['diambil'])): ?>
                 <a href="<?= APP_URL ?>/pages/payments/create.php?order_id=<?= $o['id'] ?>" class="btn btn-sm btn-outline-warning" title="Bayar"><i class="bi bi-cash"></i></a>

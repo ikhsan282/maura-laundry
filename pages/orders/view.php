@@ -53,10 +53,13 @@ require_once __DIR__ . '/../../includes/header.php';
   <div class="d-flex gap-2">
     <button onclick="printReceipt()" class="btn btn-outline-secondary btn-sm"><i class="bi bi-printer me-1"></i>Cetak Nota</button>
     <?php if (can('orders.status') && next_status($order['status'])): ?>
-    <a href="<?= APP_URL ?>/pages/orders/update-status.php?id=<?= $order['id'] ?>&csrf=<?= csrf_token() ?>"
-       class="btn btn-success btn-sm" data-confirm="Update status ke '<?= ucfirst(next_status($order['status'])) ?>'?">
-      <i class="bi bi-arrow-right-circle me-1"></i>Update Status
-    </a>
+    <form method="POST" action="<?= APP_URL ?>/pages/orders/update-status.php" style="display:inline;margin:0">
+      <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+      <input type="hidden" name="id" value="<?= $order['id'] ?>">
+      <button type="submit" class="btn btn-success btn-sm" onclick="return confirm('Update status ke \'<?= ucfirst(next_status($order['status'])) ?>\'?')">
+        <i class="bi bi-arrow-right-circle me-1"></i>Update Status
+      </button>
+    </form>
     <?php endif; ?>
     <?php if (can('payments.create') && $unpaid > 0): ?>
     <a href="<?= APP_URL ?>/pages/payments/create.php?order_id=<?= $order['id'] ?>" class="btn btn-warning btn-sm">

@@ -46,9 +46,14 @@ $title = $title ?? APP_NAME;
           <ul class="dropdown-menu dropdown-menu-end">
             <li><span class="dropdown-item-text small text-muted"><?= h($user['email'] ?? '') ?></span></li>
             <li><hr class="dropdown-divider"></li>
-            <li><a class="dropdown-item text-danger" href="<?= APP_URL ?>/auth/logout.php">
-              <i class="bi bi-box-arrow-right me-1"></i>Keluar
-            </a></li>
+            <li>
+              <form method="POST" action="<?= APP_URL ?>/auth/logout.php" style="margin:0">
+                <input type="hidden" name="csrf_token" value="<?= csrf_token() ?>">
+                <button type="submit" class="dropdown-item text-danger" style="border:0;background:none;width:100%;text-align:left;cursor:pointer">
+                  <i class="bi bi-box-arrow-right me-1"></i>Keluar
+                </button>
+              </form>
+            </li>
           </ul>
         </div>
       </div>
