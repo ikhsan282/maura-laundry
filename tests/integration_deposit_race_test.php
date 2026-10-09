@@ -185,6 +185,12 @@ if (!$fork_supported) {
         // Exactly one should succeed
         $child_success = ($child_exit === 0);
         assert_true($parent_success XOR $child_success, 'Exactly one of two concurrent debits should succeed');
+        
+        // mysqli connections cannot be reused safely after pcntl_fork.
+        // Re-open the parent connection before the final verification/cleanup.
+        $db->close();
+        $db = new mysqli(DB_HOST, DB_USER, DB_PASS, DB_NAME, DB_PORT);
+        $db->set_charset('utf8mb4');
     }
 }
 
