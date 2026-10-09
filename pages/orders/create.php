@@ -57,7 +57,11 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     }
     if (empty($items)) $errors[] = 'Item order tidak valid.';
     if ($pickup_fee < 0 || $delivery_fee < 0) $errors[] = 'Biaya pickup/delivery tidak boleh negatif.';
-    if (!$errors) $total = order_grand_total($total, $service_type, $pickup_fee, $delivery_fee);
+    if (!$errors) {
+        $total = 0;
+        foreach ($items as $it) $total += $it['subtotal'];
+        $total = order_grand_total($total, $service_type, $pickup_fee, $delivery_fee);
+    }
 
     if (empty($errors)) {
         $order_number  = generate_order_number();
@@ -70,14 +74,14 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $delivery_status = in_array($service_type, ['delivery','both'], true) ? 'scheduled' : 'not_required';
             $pickup_at = null;
             if (!empty($_POST['pickup_scheduled_at'])) {
-                $dt = DateTime::createFromFormat('!Y-m-d\TH:i', $_POST['pickup_scheduled_at']);
+                $dt = DateTime::createFromFormat('Y-m-d\\TH:i', $_POST['pickup_scheduled_at']);
                 $date_errors = DateTime::getLastErrors();
                 if (!$dt || ($date_errors !== false && ($date_errors['warning_count'] || $date_errors['error_count']))) throw new Exception('Format jadwal pickup tidak valid.');
                 $pickup_at = $dt->format('Y-m-d H:i:s');
             }
             $delivery_at = null;
             if (!empty($_POST['delivery_scheduled_at'])) {
-                $dt = DateTime::createFromFormat('!Y-m-d\TH:i', $_POST['delivery_scheduled_at']);
+                $dt = DateTime::createFromFormat('Y-m-d\\TH:i', $_POST['delivery_scheduled_at']);
                 $date_errors = DateTime::getLastErrors();
                 if (!$dt || ($date_errors !== false && ($date_errors['warning_count'] || $date_errors['error_count']))) throw new Exception('Format jadwal delivery tidak valid.');
                 $delivery_at = $dt->format('Y-m-d H:i:s');

@@ -71,12 +71,15 @@ function deposit_delta(string $type, float $amount): float {
 function generate_order_number(): string {
     $db   = db();
     $date = date('Ymd');
+    $db->query("LOCK TABLES orders WRITE");
     $stmt = $db->prepare("SELECT COUNT(*) FROM orders WHERE DATE(created_at) = CURDATE()");
     $stmt->execute();
     $stmt->bind_result($count);
     $stmt->fetch();
     $stmt->close();
-    return 'ML-' . $date . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+    $num = 'ML-' . $date . '-' . str_pad($count + 1, 4, '0', STR_PAD_LEFT);
+    $db->query("UNLOCK TABLES");
+    return $num;
 }
 
 // Status badge HTML

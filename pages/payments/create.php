@@ -38,7 +38,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($amount <= 0)                             $errors[] = 'Jumlah pembayaran harus lebih dari 0.';
     if ($amount > $remaining + 0.01)              $errors[] = 'Jumlah melebihi sisa tagihan ' . idr($remaining) . '.';
     if (!in_array($method, ['tunai','transfer','deposit'])) $errors[] = 'Metode pembayaran tidak valid.';
-    if ($method === 'deposit' && abs($amount - $remaining) > 0.01) $errors[] = 'Pembayaran dari deposit harus tepat sebesar sisa tagihan ' . idr($remaining) . '.';
     if ($method === 'deposit' && $amount > $customer_balance + 0.01) $errors[] = 'Saldo deposit tidak mencukupi. Saldo saat ini: ' . idr($customer_balance) . '.';
 
     if (empty($errors)) {
@@ -55,7 +54,6 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
             $locked_paid = (float)$lock->get_result()->fetch_assoc()['paid']; $lock->close();
             $locked_remaining = max(0, (float)$locked_order['total_amount'] - $locked_paid);
             if ($amount > $locked_remaining + 0.01) throw new RuntimeException('Sisa tagihan berubah menjadi ' . idr($locked_remaining) . '.');
-            if ($method === 'deposit' && abs($amount - $locked_remaining) > 0.01) throw new RuntimeException('Pembayaran deposit harus sebesar sisa tagihan ' . idr($locked_remaining) . '.');
 
             $deposit_id = null;
             if ($method === 'deposit') {

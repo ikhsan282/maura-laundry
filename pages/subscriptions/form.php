@@ -154,7 +154,7 @@ function addItem(serviceId, qty) {
 function toggleAddress() {
   document.getElementById('addressField').style.display = ['pickup','delivery','both'].includes(document.querySelector('[name=service_type]').value) ? '' : 'none';
 }
-SELECTED.length ? Object.entries(SELECTED).forEach(([sid, row]) => addItem(sid, row.quantity)) : addItem();
+Object.keys(SELECTED).length ? Object.entries(SELECTED).forEach(([sid, row]) => addItem(sid, row.quantity)) : addItem();
 toggleAddress();
 </script>
 <?php require_once __DIR__ . '/../../includes/footer.php'; ?>

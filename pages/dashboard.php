@@ -178,7 +178,7 @@ require_once __DIR__ . '/../includes/header.php';
           <tr><td colspan="6" class="text-center text-muted py-4">Belum ada order</td></tr>
         <?php else: foreach ($recent as $r): ?>
           <tr>
-            <td><a href="<?= APP_URL ?>/pages/orders/view.php?id=<?= $r['order_number'] ?>" class="fw-medium text-decoration-none"><?= h($r['order_number']) ?></a></td>
+            <td><a href="<?= APP_URL ?>/pages/orders/view.php?order_number=<?= h($r['order_number']) ?>" class="fw-medium text-decoration-none"><?= h($r['order_number']) ?></a></td>
             <td><?= h($r['customer_name']) ?></td>
             <td><?= status_badge($r['status']) ?></td>
             <td class="text-end fw-medium"><?= idr($r['total_amount']) ?></td>
