@@ -3,12 +3,14 @@
 Sistem Manajemen Laundry — PHP Native + MySQLi + Bootstrap 5.
 
 ## Stack
-- PHP 8.5+ (Native, no framework)
-- MySQLi with prepared statements
-- Bootstrap 5.3.8 (CDN)
-- Bootstrap Icons 1.13.2 (CDN)
-- Chart.js 4.5.1 (CDN)
+- PHP 8.5+ (Native, tanpa framework)
+- MySQLi dengan prepared statements
 - MySQL / MariaDB
+- Bootstrap 5.3.8 + Bootstrap Icons 1.13.2 (CDN)
+- Chart.js 4.5.1 (CDN)
+- Tom Select 2.3.1 (CDN)
+- Vanilla JavaScript
+- PWA (Web App Manifest + Service Worker)
 
 ## Instalasi
 
@@ -127,6 +129,11 @@ maura-laundry/
 - Bulanan: tanggal dibatasi ke akhir bulan bila perlu (mis. 31 Jan → 28 Feb)
 - Tidak ada cron: pembuatan order adalah aksi manual staf
 - Permission: `subscriptions.view`, `subscriptions.manage`; halaman `pages/subscriptions/`, logika di `includes/subscriptions.php`
+
+### Loyalty Points
+- Pelanggan otomatis memperoleh 1 poin per Rp10.000 pembayaran
+- Saldo dan histori poin tersedia pada detail pelanggan
+- Penukaran poin hanya dapat dilakukan pengguna dengan permission `customers.edit`
 
 ### Pembayaran
 - Catat pembayaran per order; metode: tunai / transfer / saldo deposit
