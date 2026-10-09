@@ -5,7 +5,9 @@ Sistem Manajemen Laundry — PHP Native + MySQLi + Bootstrap 5.
 ## Stack
 - PHP 8.5+ (Native, no framework)
 - MySQLi with prepared statements
-- Bootstrap 5.3 + Bootstrap Icons (CDN)
+- Bootstrap 5.3.8 (CDN)
+- Bootstrap Icons 1.13.2 (CDN)
+- Chart.js 4.5.1 (CDN)
 - MySQL / MariaDB
 
 ## Instalasi

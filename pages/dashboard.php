@@ -41,6 +41,17 @@ $status_data = [];
 $res = $db->query("SELECT status, COUNT(*) as cnt FROM orders GROUP BY status");
 while ($row = $res->fetch_assoc()) $status_data[$row['status']] = $row['cnt'];
 
+// Revenue last 7 days chart data
+$rev_labels = [];
+$rev_values = [];
+for ($i = 6; $i >= 0; $i--) {
+    $d = date('Y-m-d', strtotime("-$i days"));
+    $rev_labels[] = date('d M', strtotime($d));
+    $stmt = $db->prepare("SELECT COALESCE(SUM(amount),0) FROM payments WHERE DATE(paid_at) = ?");
+    $stmt->bind_param('s', $d); $stmt->execute(); $stmt->bind_result($v); $stmt->fetch(); $stmt->close();
+    $rev_values[] = (float) $v;
+}
+
 $title = 'Dashboard';
 require_once __DIR__ . '/../includes/header.php';
 ?>
@@ -125,6 +136,21 @@ require_once __DIR__ . '/../includes/header.php';
   </div>
 </div>
 
+<div class="row g-3 mb-4">
+  <div class="col-lg-8">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3"><h6 class="mb-0 fw-semibold"><i class="bi bi-graph-up me-2 text-primary"></i>Pendapatan 7 Hari Terakhir</h6></div>
+      <div class="card-body"><canvas id="revenueChart" height="110"></canvas></div>
+    </div>
+  </div>
+  <div class="col-lg-4">
+    <div class="card border-0 shadow-sm h-100">
+      <div class="card-header bg-white py-3"><h6 class="mb-0 fw-semibold"><i class="bi bi-pie-chart me-2 text-primary"></i>Status Order</h6></div>
+      <div class="card-body"><canvas id="statusChart" height="220"></canvas></div>
+    </div>
+  </div>
+</div>
+
 <!-- Recent Orders -->
 <div class="card border-0 shadow-sm">
   <div class="card-header bg-white d-flex justify-content-between align-items-center py-3">
@@ -160,5 +186,29 @@ require_once __DIR__ . '/../includes/header.php';
     </div>
   </div>
 </div>
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.5.1/dist/chart.umd.min.js"></script>
+<script>
+new Chart(document.getElementById('revenueChart'), {
+  type: 'line',
+  data: {
+    labels: <?= json_encode($rev_labels) ?>,
+    datasets: [{ label: 'Pendapatan', data: <?= json_encode($rev_values) ?>, borderColor: '#0d6efd', backgroundColor: 'rgba(13,110,253,.12)', fill: true, tension: .3 }]
+  },
+  options: {
+    interaction: { mode: 'index', intersect: false },
+    scales: { y: { beginAtZero: true, ticks: { callback: v => 'Rp ' + Number(v).toLocaleString('id-ID') } } },
+    plugins: { tooltip: { callbacks: { label: ctx => 'Rp ' + Number(ctx.parsed.y).toLocaleString('id-ID') } } }
+  }
+});
+new Chart(document.getElementById('statusChart'), {
+  type: 'doughnut',
+  data: {
+    labels: <?= json_encode(array_map('ucfirst', array_keys($status_data))) ?>,
+    datasets: [{ data: <?= json_encode(array_values($status_data)) ?>, backgroundColor: ['#0d6efd','#ffc107','#6f42c1','#198754','#6c757d'], borderWidth: 0 }]
+  },
+  options: { plugins: { legend: { position: 'bottom' } } }
+});
+</script>
 
 <?php require_once __DIR__ . '/../includes/footer.php'; ?>
