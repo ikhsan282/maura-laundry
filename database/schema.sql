@@ -86,10 +86,41 @@ CREATE TABLE `services` (
   PRIMARY KEY (`id`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
+-- Recurring order definitions
+CREATE TABLE `subscriptions` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `customer_id` int(11) NOT NULL,
+  `frequency` enum('weekly','biweekly','monthly') NOT NULL,
+  `next_due` date NOT NULL,
+  `is_active` tinyint(1) NOT NULL DEFAULT 1,
+  `service_type` enum('none','pickup','delivery','both') NOT NULL DEFAULT 'none',
+  `address` text DEFAULT NULL,
+  `notes` text DEFAULT NULL,
+  `created_at` datetime DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` datetime DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  PRIMARY KEY (`id`),
+  KEY `idx_subscriptions_due` (`is_active`,`next_due`),
+  KEY `subscription_customer_id` (`customer_id`),
+  CONSTRAINT `s_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE `subscription_items` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `subscription_id` int(11) NOT NULL,
+  `service_id` int(11) NOT NULL,
+  `quantity` decimal(10,2) NOT NULL CHECK (`quantity` > 0),
+  PRIMARY KEY (`id`),
+  KEY `subscription_item_service_id` (`service_id`),
+  UNIQUE KEY `subscription_service` (`subscription_id`,`service_id`),
+  CONSTRAINT `si_subscription` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`) ON DELETE CASCADE,
+  CONSTRAINT `si_service` FOREIGN KEY (`service_id`) REFERENCES `services` (`id`) ON DELETE RESTRICT
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
 -- Orders
 CREATE TABLE `orders` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `order_number` varchar(20) NOT NULL,
+  `subscription_id` int(11) DEFAULT NULL,
   `customer_id` int(11) NOT NULL,
   `user_id` int(11) NOT NULL,
   `status` enum('diterima','dicuci','disetrika','selesai','diambil') NOT NULL DEFAULT 'diterima',
@@ -113,8 +144,10 @@ CREATE TABLE `orders` (
   UNIQUE KEY `order_number` (`order_number`),
   KEY `customer_id` (`customer_id`),
   KEY `user_id` (`user_id`),
+  KEY `subscription_id` (`subscription_id`),
   CONSTRAINT `o_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers` (`id`),
-  CONSTRAINT `o_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`)
+  CONSTRAINT `o_user` FOREIGN KEY (`user_id`) REFERENCES `users` (`id`),
+  CONSTRAINT `o_subscription` FOREIGN KEY (`subscription_id`) REFERENCES `subscriptions` (`id`) ON DELETE SET NULL
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
 
 -- Order Items
@@ -211,7 +244,9 @@ INSERT INTO `permissions` (`id`, `name`, `description`) VALUES
 (19, 'users.manage',      'Kelola pengguna'),
 (20, 'roles.manage',      'Kelola roles'),
 (21, 'deposits.view',     'Lihat saldo dan mutasi deposit'),
-(22, 'deposits.manage',   'Tambah, debit, dan refund deposit');
+(22, 'deposits.manage',   'Tambah, debit, dan refund deposit'),
+(23, 'subscriptions.view',   'Lihat langganan'),
+(24, 'subscriptions.manage', 'Kelola langganan (buat, edit, hapus, generate order)');
 
 -- Super Admin: all permissions
 INSERT INTO `role_permissions` (`role_id`, `permission_id`)
@@ -220,11 +255,11 @@ SELECT 1, id FROM `permissions`;
 -- Admin: all except users/roles manage
 INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
 (2,1),(2,2),(2,3),(2,4),(2,5),(2,6),(2,7),(2,8),(2,9),(2,10),
-(2,11),(2,12),(2,13),(2,14),(2,15),(2,16),(2,17),(2,18),(2,21),(2,22);
+(2,11),(2,12),(2,13),(2,14),(2,15),(2,16),(2,17),(2,18),(2,21),(2,22),(2,23),(2,24);
 
 -- Kasir: dashboard, orders, customers view/create, payments, deposits
 INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES
-(3,1),(3,2),(3,3),(3,7),(3,8),(3,15),(3,16),(3,21),(3,22);
+(3,1),(3,2),(3,3),(3,7),(3,8),(3,15),(3,16),(3,21),(3,22),(3,23),(3,24);
 
 -- Operator: dashboard, orders view/status, customers view
 INSERT INTO `role_permissions` (`role_id`, `permission_id`) VALUES

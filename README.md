@@ -121,6 +121,13 @@ maura-laundry/
 - Kasir dapat membayar tepat sebesar sisa order dari saldo deposit; pengecekan saldo, debit ledger, dan payment dilakukan atomik dalam transaksi
 - Pelanggan hanya melihat saldo dan histori miliknya dari akun yang terhubung
 
+### Langganan (Order Berulang)
+- Definisi langganan: pelanggan, paket item layanan + jumlah, frekuensi (mingguan / 2 mingguan / bulanan), jatuh tempo berikutnya, tipe antar-jemput, alamat, status aktif
+- Tombol **Buat Order** mengubah langganan menjadi order nyata dalam satu transaksi, lalu memajukan jatuh tempo ke periode berikutnya; order menyimpan `subscription_id`
+- Bulanan: tanggal dibatasi ke akhir bulan bila perlu (mis. 31 Jan → 28 Feb)
+- Tidak ada cron: pembuatan order adalah aksi manual staf
+- Permission: `subscriptions.view`, `subscriptions.manage`; halaman `pages/subscriptions/`, logika di `includes/subscriptions.php`
+
 ### Pembayaran
 - Catat pembayaran per order; metode: tunai / transfer / saldo deposit
 - Daftar pembayaran dengan filter status & metode
