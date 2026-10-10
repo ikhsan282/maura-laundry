@@ -1,7 +1,7 @@
 <?php
 define('APP_NAME',    'Maura Laundry');
 define('APP_VERSION', '1.0.0');
-define('APP_URL',     'http://localhost/maura-laundry');
+define('APP_URL',     'http://localhost:8080/maura-laundry');
 define('APP_EMAIL',   'admin@mauralaundry.com');
 
 // Session
