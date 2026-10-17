@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../../config/config.php';
-require_once __DIR__ . '/../../../includes/functions.php';
-require_once __DIR__ . '/../../../includes/auth.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/auth.php';
 require_login();
 require_permission('orders.status');
 if ($_SERVER['REQUEST_METHOD'] !== 'POST' || !csrf_verify()) { flash('error', 'Permintaan tidak valid.'); redirect(APP_URL . '/pages/orders/index.php'); }

@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../../config/config.php';
-require_once __DIR__ . '/../../../includes/functions.php';
-require_once __DIR__ . '/../../../includes/auth.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/auth.php';
 require_login();
 require_permission('customers.create');
 
@@ -19,8 +19,10 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($email !== '' && !filter_var($email, FILTER_VALIDATE_EMAIL)) $errors[] = 'Format email tidak valid.';
 
     if (empty($errors)) {
+        $email = $email !== '' ? $email : null;
+        $address = $address !== '' ? $address : null;
         $stmt = $db->prepare("INSERT INTO customers (name,phone,email,address) VALUES (?,?,?,?)");
-        $stmt->bind_param('ssss', $name, $phone, $email ?: null, $address ?: null);
+        $stmt->bind_param('ssss', $name, $phone, $email, $address);
         $stmt->execute(); $new_id = $db->insert_id; $stmt->close();
         flash('success', 'Pelanggan berhasil ditambahkan.');
         $redirect = $_GET['redirect'] ?? '';

@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../../config/config.php';
-require_once __DIR__ . '/../../../includes/functions.php';
-require_once __DIR__ . '/../../../includes/auth.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/auth.php';
 require_login();
 require_permission('services.edit');
 
@@ -27,8 +27,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($price <= 0)  $errors[] = 'Harga harus lebih dari 0.';
 
     if (empty($errors)) {
+        $descDb = $desc !== '' ? $desc : null;
         $stmt = $db->prepare("UPDATE services SET name=?,type=?,price=?,unit=?,duration_days=?,description=?,is_active=? WHERE id=?");
-        $stmt->bind_param('ssdssisi', $name, $type, $price, $unit, $days, $desc ?: null, $active, $id);
+        $stmt->bind_param('ssdssisi', $name, $type, $price, $unit, $days, $descDb, $active, $id);
         $stmt->execute(); $stmt->close();
         flash('success', 'Layanan berhasil diperbarui.');
         redirect(APP_URL . '/pages/services/index.php');

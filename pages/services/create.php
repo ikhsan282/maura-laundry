@@ -1,7 +1,7 @@
 <?php
-require_once __DIR__ . '/../../../config/config.php';
-require_once __DIR__ . '/../../../includes/functions.php';
-require_once __DIR__ . '/../../../includes/auth.php';
+require_once __DIR__ . '/../../config/config.php';
+require_once __DIR__ . '/../../includes/functions.php';
+require_once __DIR__ . '/../../includes/auth.php';
 require_login();
 require_permission('services.create');
 
@@ -23,8 +23,9 @@ if ($_SERVER['REQUEST_METHOD'] === 'POST') {
     if ($unit === '')                              $errors[] = 'Satuan wajib diisi.';
 
     if (empty($errors)) {
+        $descDb = $desc !== '' ? $desc : null;
         $stmt = $db->prepare("INSERT INTO services (name,type,price,unit,duration_days,description,is_active) VALUES (?,?,?,?,?,?,?)");
-        $stmt->bind_param('ssdsssi', $name, $type, $price, $unit, $days, $desc ?: null, $active);
+        $stmt->bind_param('ssdsssi', $name, $type, $price, $unit, $days, $descDb, $active);
         $stmt->execute(); $stmt->close();
         flash('success', 'Layanan berhasil ditambahkan.');
         redirect(APP_URL . '/pages/services/index.php');
